@@ -1,7 +1,9 @@
 import asyncio
+import datetime
 import logging
 from logging.handlers import RotatingFileHandler
 import requests
+from datetime import date
 
 
 async def get_ticker_info(ticker: str):
@@ -263,10 +265,13 @@ async def analysis(tickets: list, start_date: str, end_date: str, interval: int)
 
 async def main():
 
+    current_date = date.today() - datetime.timedelta(days=1)
+    days_to_analyses = current_date - datetime.timedelta(days=5)
+
     await analysis(
-        ['GAZP', 'AFLT', 'PIKK', 'UNAC', 'GECO', 'PHOR', 'APTK', 'RNFT', 'SBER', 'YNDX', 'SGZH'], 
-        '2023-09-22', 
-        '2023-09-26', 
+        ['GAZP', 'AFLT', 'PIKK', 'UNAC', 'GECO', 'PHOR', 'APTK', 'RNFT', 'SBER', 'YNDX', 'SGZH', 'SNGS', 'ROSN', 'HYDR', 'NLMK'],
+        days_to_analyses,
+        current_date,
         24
     )
 
