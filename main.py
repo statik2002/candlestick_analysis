@@ -70,7 +70,7 @@ def pin_bar(data):
             bar_body = data[index]['open'] - data[index]['close']
             bar_up_tail = data[index]['high'] - data[index]['open']
             bar_down_tail = data[index]['close'] - data[index]['low']
-            if bar_body*1.5 < bar_up_tail:
+            if bar_body*2 < bar_up_tail:
                 # tail bigger than body 2x
                 if data[index]['open'] < data[index-1]['high'] and data[index]['close'] > data[index-1]['low']:
                     # body pinbar between hi and low previous bar
@@ -85,7 +85,7 @@ def pin_bar(data):
             bar_body = data[index]['close'] - data[index]['open']
             bar_up_tail = data[index]['high'] - data[index]['close']
             bar_down_tail = data[index]['open'] - data[index]['low']
-            if bar_body*1.5 < bar_down_tail:
+            if bar_body*2 < bar_down_tail:
                 if data[index]['open'] > data[index-1]['low'] and data[index]['close'] < data[index-1]['high']:
                     if data[index]['low'] < data[index-1]['low']:
                         if bar_down_tail > bar_up_tail:
@@ -204,6 +204,45 @@ def get_eaters(data):
     return proof_eaters_up_counter, proof_eaters_down_counter, proof_data_up, proof_data_down
 
 
+def get_morning_stars(data):
+
+    index = 1
+    morning_star_up_counter = 0
+    morning_star_up = []
+    morning_star_down_counter = 0
+    morning_star_down = []
+
+    while len(data) > index:
+
+        if data[index]['open'] < data[index]['close']:
+            # uptrend
+            if data[index-1]['open'] < data[index-1]['close']:
+                mx = data[index-1]['close']
+            else:
+                mx = data[index-1]['open']
+
+            if mx < data[index]['open'] and mx < data[index-2]['close'] and mx < data[index-2]['open']:
+                print(len(data))
+                print(f'mx={mx}, prev_open={data[index-2]["open"]}, prev_close={data[index-2]["close"]}, date_prev={data[index-2]["end"]}')
+                morning_star_up_counter += 1
+                morning_star_up.append(data[index-1])
+
+        else:
+            # downtrend
+            if data[index - 1]['open'] < data[index - 1]['close']:
+                mn = data[index - 1]['open']
+            else:
+                mn = data[index - 1]['close']
+
+            if mn > data[index]['open'] and mn > data[index - 2]['close'] and mn > data[index-2]['open']:
+                morning_star_down_counter += 1
+                morning_star_down.append(data[index-1])
+
+        index += 1
+
+    return morning_star_down_counter, morning_star_up_counter, morning_star_down, morning_star_up
+
+
 async def analysis(tickets: list, start_date: str, end_date: str, interval: int):
     for ticket in tickets:
         ticket_by_dates = await get_ticket_by_date_range(ticket, start_date, end_date, str(interval))
@@ -262,14 +301,30 @@ async def analysis(tickets: list, start_date: str, end_date: str, interval: int)
             for day in proof_data_down:
                 print(f'{ticket}---{day["end"]}')
 
+        '''
+        morning_star_down_counter, morning_star_up_counter, morning_star_down, morning_star_up = get_morning_stars(data)
+        if morning_star_up_counter:
+            print(f'{ticket}---Proved up morning star [*]={morning_star_up_counter}')
+            for day in morning_star_up:
+                print(f'{ticket}---{day["end"]}')
+        if morning_star_down_counter:
+            print(f'{ticket}---Proved down morning star [*]={morning_star_down_counter}')
+            for day in morning_star_down:
+                print(f'{ticket}---{day["end"]}')
+        '''
+
 
 async def main():
 
     current_date = date.today() - datetime.timedelta(days=1)
-    days_to_analyses = current_date - datetime.timedelta(days=5)
+    days_to_analyses = current_date - datetime.timedelta(days=4)
 
     await analysis(
-        ['GAZP', 'AFLT', 'PIKK', 'UNAC', 'GECO', 'PHOR', 'APTK', 'RNFT', 'SBER', 'YNDX', 'SGZH', 'SNGS', 'ROSN', 'HYDR', 'NLMK'],
+        [
+            'GAZP', 'AFLT', 'PIKK', 'UNAC', 'GECO',
+            'PHOR', 'APTK', 'RNFT', 'SBER', 'YNDX',
+            'SGZH', 'SNGS', 'ROSN', 'HYDR', 'NLMK'
+        ],
         days_to_analyses,
         current_date,
         24
